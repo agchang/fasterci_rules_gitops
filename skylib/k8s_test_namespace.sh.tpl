@@ -25,7 +25,7 @@ function guess_runfiles() {
 }
 
 TEST_SRCDIR="$(readlink -f $TEST_SRCDIR)"
-cd $TEST_SRCDIR/arize_ai
+cd $TEST_SRCDIR/_main
 RUNFILES=${TEST_SRCDIR:-$(guess_runfiles)}
 TEST_UNDECLARED_OUTPUTS_DIR=${TEST_UNDECLARED_OUTPUTS_DIR:-.}
 
