@@ -48,21 +48,22 @@ echo "Cluster: ${CLUSTER}" >&2
 echo "User: ${USER}" >&2
 
 set +e
+
+ns_cleanup() {
+    echo "Performing namespace ${NAMESPACE} cleanup..."
+    ${KUBECTL} --kubeconfig=${KUBECONFIG} --cluster=${CLUSTER} --user=${USER} delete namespace --wait=false ${NAMESPACE}
+}
+
 if [ -n "${K8S_TEST_NAMESPACE:-}" ]
 then
     # use provided namespace
     NAMESPACE=${K8S_TEST_NAMESPACE}
-    # do not delete namespace after the test is complete
-    DELETE_NAMESPACE_FLAG=""
 elif [ -n "${K8S_MYNAMESPACE:-}" ]
 then
     # do not create random namesspace
     NAMESPACE=$(whoami)
-    # do not delete namespace after the test is complete
-    DELETE_NAMESPACE_FLAG=""
 else
     # create random namespace
-    DELETE_NAMESPACE_FLAG="-delete_namespace"
     COUNT="0"
     while true; do
         NAMESPACE=`whoami`-$(( (RANDOM) + 32767 ))
@@ -73,6 +74,8 @@ else
             exit 1
         fi
     done
+    # delete namespace after the test is complete or failed
+    trap ns_cleanup EXIT
 fi
 echo "Namespace: ${NAMESPACE}" >&2
 set -e
@@ -112,4 +115,4 @@ function waitpids() {
 # create k8s objects
 %{statements}
 
-%{it_sidecar} -namespace=${NAMESPACE} %{sidecar_args} ${DELETE_NAMESPACE_FLAG} "$@"
+%{it_sidecar} -namespace=${NAMESPACE} %{sidecar_args} "$@"
